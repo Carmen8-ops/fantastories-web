@@ -886,7 +886,7 @@ async function closeDay() {
   showToast(`Giornata ${currentDay} chiusa`);
 }
 
-/*
+
 useEffect(() => {
   if (votingPhase || isChoosingRoster) return;
 
@@ -915,8 +915,8 @@ useEffect(() => {
 
   return () => clearInterval(interval);
 }, [code, votingPhase, isChoosingRoster]);
-*/
 
+/*
 useEffect(() => {
   if (!code) return;
 
@@ -960,6 +960,7 @@ setTimeout(() => {
     supabase.removeChannel(channel);
   };
 }, [code]);
+*/
 
   if (!eventData) {
     return (
