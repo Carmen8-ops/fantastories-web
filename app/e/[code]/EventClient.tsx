@@ -83,6 +83,7 @@ export default function EventClient({ code }: { code: string }) {
   const [isChoosingRoster, setIsChoosingRoster] = useState(false);
   const [votingPhase, setVotingPhase] = useState(false);
   const [waitingForOthers, setWaitingForOthers] = useState(false);
+  const [isApplyingRemoteUpdate, setIsApplyingRemoteUpdate] = useState(false);
 const [currentVoterIndex, setCurrentVoterIndex] = useState(0);
 const [votes, setVotes] = useState<
   Record<
@@ -189,7 +190,7 @@ if (localMe && myRoster.length === 0) {
 }, [code]);
 
   useEffect(() => {
-  if (!eventData || votingPhase || isChoosingRoster) return;
+  if (!eventData || votingPhase || isChoosingRoster || isApplyingRemoteUpdate) return;
 
   const updatedEvent: SavedEvent = {
     ...eventData,
@@ -448,24 +449,55 @@ if (localMe && myRoster.length === 0) {
   setSelectedEvent(null);
 }
 
-  function requestForAll() {
-    if (!selectedEvent || !eventData) return;
+  async function requestForAll() {
+  if (!selectedEvent || !eventData) return;
 
-    const request: EventRequest = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      eventId: selectedEvent.id,
-      eventText: selectedEvent.text,
-      target: "_all_",
-      points: selectedEvent.points,
-      requestedBy: eventData.me || "Giocatore",
-      type: selectedEvent.type,
-    };
+  const request: EventRequest = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    eventId: selectedEvent.id,
+    eventText: selectedEvent.text,
+    target: "all",
+    points: selectedEvent.points,
+    requestedBy: eventData.me || "Giocatore",
+    type: selectedEvent.type,
+  };
 
-    setRequests((prev) => [request, ...prev]);
-    showToast(`Segnalato all’arbitro: ${selectedEvent.text} → tutti`);
-    setSelectedEvent(null);
+  const { data: latestData, error: latestError } = await supabase
+    .from("events")
+    .select("*")
+    .eq("code", code)
+    .single();
+
+  if (latestError || !latestData) {
+    console.error("Errore recupero richieste correnti:", latestError);
+    alert("Errore recupero richieste");
+    return;
   }
 
+  const latestEvent = latestData.data as SavedEvent;
+  const updatedRequests = [request, ...(latestEvent.requests ?? [])];
+
+  const updatedEvent: SavedEvent = {
+    ...latestEvent,
+    me: "",
+    requests: updatedRequests,
+  };
+
+  const { error } = await supabase
+    .from("events")
+    .update({ data: updatedEvent })
+    .eq("code", code);
+
+  if (error) {
+    console.error("Errore invio richiesta:", error);
+    alert("Errore invio richiesta");
+    return;
+  }
+
+  setRequests(updatedRequests);
+  showToast(`Segnalato all’arbitro: ${selectedEvent.text} → tutti`);
+  setSelectedEvent(null);
+}
  function approveRequest(request: EventRequest) {
   if (!eventData) return;
 
@@ -474,7 +506,7 @@ if (localMe && myRoster.length === 0) {
   if (isMultiDayVacation) {
     const updatedDayScores = { ...(eventData.dayParticipantScores ?? {}) };
 
-    if (request.target === "all") {
+    if (request.target === "_all_") {
       eventData.participants.forEach((p) => {
         updatedDayScores[p] = (updatedDayScores[p] ?? 0) + request.points;
       });
@@ -501,7 +533,7 @@ if (localMe && myRoster.length === 0) {
       );
     }
   } else {
-    if (request.target === "all") {
+    if (request.target === "_all_") {
       const updated = { ...scores };
 
       eventData.participants.forEach((p) => {
@@ -629,7 +661,13 @@ function hasPlayerCompletedVote(playerName: string) {
 
 function haveAllPlayersVoted() {
   if (!eventData) return false;
-  return eventData.players.every((player) => hasPlayerCompletedVote(player));
+
+  const latestVotes = eventData.votes ?? {};
+
+  return eventData.players.every((player) => {
+    const vote = latestVotes[player];
+    return !!(vote?.iconico && vote?.protagonista && vote?.tranquillo);
+  });
 }
 
 async function goToNextVoter() {
@@ -720,7 +758,6 @@ useEffect(() => {
     setScores(parsed.scores ?? {});
 
     if (parsed.participantCosts) {
-      alert ("participantCosts visti")
       setWaitingForOthers(false);
       setVotingPhase(false);
       setIsChoosingRoster(true);
@@ -773,7 +810,7 @@ useEffect(() => {
     if (updateError) {
       console.error("Errore salvataggio costi finali:", updateError);
       return;
-
+}
       setEventData({
   ...updatedEvent,
   me: localMe,
@@ -785,7 +822,6 @@ setVotingPhase(false);
 setIsChoosingRoster(true);
 showToast("Tutti hanno votato");
 return;
-    }
   }, 1500);
 
   return () => clearInterval(interval);
@@ -877,7 +913,7 @@ useEffect(() => {
   }, 500);
 
   return () => clearInterval(interval);
-}, [code, votingPhase]);
+}, [code, votingPhase, isChoosingRoster]);
 
 useEffect(() => {
   if (!code) return;
@@ -899,14 +935,21 @@ useEffect(() => {
 
         const localMe = localStorage.getItem("fantastories_me") ?? "";
 
-        setEventData({
-          ...updated,
-          me: localMe,
-        });
+        setIsApplyingRemoteUpdate(true);
 
-        setScores(updated.scores ?? {});
-        setRequests(updated.requests ?? []);
-        setVotes(updated.votes ?? {});
+setEventData({
+  ...updated,
+  me: localMe,
+});
+
+setScores(updated.scores ?? {});
+setRequests(updated.requests ?? []);
+setVotes(updated.votes ?? {});
+setHiddenRequestIds([]);
+
+setTimeout(() => {
+  setIsApplyingRemoteUpdate(false);
+}, 0);
       }
     )
     .subscribe();
@@ -1127,13 +1170,18 @@ const myRosterCost = (eventData.rosters?.[eventData.me] ?? []).reduce(
   0
 );
 
-  const needsRoster =
+ const myRoster = eventData?.rosters?.[eventData.me] ?? [];
+
+const noOneHasRoster = !Object.values(eventData.rosters ?? {}).some(
+  (r) => r.length > 0
+);
+
+const needsRoster =
   eventData.me &&
   (!eventData.rosters ||
     !eventData.rosters[eventData.me] ||
-    eventData.rosters[eventData.me].length === 0);
-    !Object.values(eventData.rosters ?? {}).some((r) => r.length > 0);
-    const myRoster = eventData?.rosters?.[eventData.me] ?? [];
+    eventData.rosters[eventData.me].length === 0 ||
+    noOneHasRoster);
 
     if (isChoosingRoster) {
   const myRoster = eventData.rosters?.[eventData.me] ?? [];
