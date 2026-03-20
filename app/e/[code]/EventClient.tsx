@@ -879,6 +879,43 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, [code, votingPhase]);
 
+useEffect(() => {
+  if (!code) return;
+
+  const channel = supabase
+    .channel(`event-${code}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "events",
+        filter: `code=eq.${code}`,
+      },
+      (payload) => {
+        const row = payload.new as { data?: SavedEvent };
+        const updated = row.data;
+        if (!updated) return;
+
+        const localMe = localStorage.getItem("fantastories_me") ?? "";
+
+        setEventData({
+          ...updated,
+          me: localMe,
+        });
+
+        setScores(updated.scores ?? {});
+        setRequests(updated.requests ?? []);
+        setVotes(updated.votes ?? {});
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [code]);
+
   if (!eventData) {
     return (
       <main style={{ minHeight: "100vh", padding: 24 }}>
