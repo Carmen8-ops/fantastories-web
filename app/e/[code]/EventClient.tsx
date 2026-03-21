@@ -341,26 +341,79 @@ if (localMe && myRoster.length === 0) {
     );
   }
 
-  function assignDirectToParticipant(name: string) {
+  async function assignDirectToParticipant(name: string) {
   if (!selectedEvent || !eventData) return;
 
-  if (isMultiDayVacation) {
-    const currentDayScores = eventData.dayParticipantScores ?? {};
+  const { data: latestData, error: latestError } = await supabase
+    .from("events")
+    .select("*")
+    .eq("code", code)
+    .single();
 
+  if (latestError || !latestData) {
+    console.error("Errore recupero evento:", latestError);
+    alert("Errore recupero evento");
+    return;
+  }
+
+  const latestEvent = latestData.data as SavedEvent;
+
+  if (isMultiDayVacation) {
+    const currentDayScores = latestEvent.dayParticipantScores ?? {};
     const updatedDayScores = {
       ...currentDayScores,
       [name]: (currentDayScores[name] ?? 0) + selectedEvent.points,
     };
 
-    setEventData({
-      ...eventData,
+    const updatedEvent: SavedEvent = {
+      ...latestEvent,
+      me: "",
       dayParticipantScores: updatedDayScores,
+    };
+
+    const { error } = await supabase
+      .from("events")
+      .update({ data: updatedEvent })
+      .eq("code", code);
+
+    if (error) {
+      console.error("Errore salvataggio punti:", error);
+      alert("Errore salvataggio punti");
+      return;
+    }
+
+    setEventData({
+      ...updatedEvent,
+      me: eventData.me,
     });
   } else {
-    setScores((prev) => ({
-      ...prev,
-      [name]: (prev[name] ?? 0) + selectedEvent.points,
-    }));
+    const updatedScores = {
+      ...(latestEvent.scores ?? {}),
+      [name]: ((latestEvent.scores ?? {})[name] ?? 0) + selectedEvent.points,
+    };
+
+    const updatedEvent: SavedEvent = {
+      ...latestEvent,
+      me: "",
+      scores: updatedScores,
+    };
+
+    const { error } = await supabase
+      .from("events")
+      .update({ data: updatedEvent })
+      .eq("code", code);
+
+    if (error) {
+      console.error("Errore salvataggio punti:", error);
+      alert("Errore salvataggio punti");
+      return;
+    }
+
+    setScores(updatedScores);
+    setEventData({
+      ...updatedEvent,
+      me: eventData.me,
+    });
   }
 
   showToast(
@@ -369,28 +422,80 @@ if (localMe && myRoster.length === 0) {
   setSelectedEvent(null);
 }
 
- function assignDirectToAll() {
+ async function assignDirectToAll() {
   if (!selectedEvent || !eventData) return;
 
-  if (isMultiDayVacation) {
-    const updatedDayScores = { ...(eventData.dayParticipantScores ?? {}) };
+  const { data: latestData, error: latestError } = await supabase
+    .from("events")
+    .select("*")
+    .eq("code", code)
+    .single();
 
-    eventData.participants.forEach((p) => {
+  if (latestError || !latestData) {
+    console.error("Errore recupero evento:", latestError);
+    alert("Errore recupero evento");
+    return;
+  }
+
+  const latestEvent = latestData.data as SavedEvent;
+
+  if (isMultiDayVacation) {
+    const updatedDayScores = { ...(latestEvent.dayParticipantScores ?? {}) };
+
+    latestEvent.participants.forEach((p) => {
       updatedDayScores[p] = (updatedDayScores[p] ?? 0) + selectedEvent.points;
     });
 
-    setEventData({
-      ...eventData,
+    const updatedEvent: SavedEvent = {
+      ...latestEvent,
+      me: "",
       dayParticipantScores: updatedDayScores,
+    };
+
+    const { error } = await supabase
+      .from("events")
+      .update({ data: updatedEvent })
+      .eq("code", code);
+
+    if (error) {
+      console.error("Errore salvataggio punti:", error);
+      alert("Errore salvataggio punti");
+      return;
+    }
+
+    setEventData({
+      ...updatedEvent,
+      me: eventData.me,
     });
   } else {
-    const updated = { ...scores };
+    const updatedScores = { ...(latestEvent.scores ?? {}) };
 
-    eventData.participants.forEach((p) => {
-      updated[p] = (updated[p] ?? 0) + selectedEvent.points;
+    latestEvent.participants.forEach((p) => {
+      updatedScores[p] = (updatedScores[p] ?? 0) + selectedEvent.points;
     });
 
-    setScores(updated);
+    const updatedEvent: SavedEvent = {
+      ...latestEvent,
+      me: "",
+      scores: updatedScores,
+    };
+
+    const { error } = await supabase
+      .from("events")
+      .update({ data: updatedEvent })
+      .eq("code", code);
+
+    if (error) {
+      console.error("Errore salvataggio punti:", error);
+      alert("Errore salvataggio punti");
+      return;
+    }
+
+    setScores(updatedScores);
+    setEventData({
+      ...updatedEvent,
+      me: eventData.me,
+    });
   }
 
   showToast(
