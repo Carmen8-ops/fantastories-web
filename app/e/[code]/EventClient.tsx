@@ -299,9 +299,9 @@ const visibleRequests = useMemo(() => {
     (request) => !hiddenRequestIds.includes(request.id)
   );
 
-  const uniqueMap = new Map<string, EventRequest>();
+  const seenKeys = new Set<string>();
 
-  filtered.forEach((request) => {
+  return filtered.filter((request) => {
     const key = [
       request.eventText,
       request.target,
@@ -310,12 +310,13 @@ const visibleRequests = useMemo(() => {
       request.type,
     ].join("|");
 
-    if (!uniqueMap.has(key)) {
-      uniqueMap.set(key, request);
+    if (seenKeys.has(key)) {
+      return false;
     }
-  });
 
-  return Array.from(uniqueMap.values());
+    seenKeys.add(key);
+    return true;
+  });
 }, [requests, hiddenRequestIds]);
 
   function showToast(message: string) {
@@ -1893,7 +1894,7 @@ const updatedEvent: SavedEvent = {
 
         {view === "bonus" && (
           <>
-            {eventData.scoreMode === "arbitro" && canAssign && requests.length > 0 && (
+            {eventData.scoreMode === "arbitro" && canAssign && visibleRequests.length > 0 && (
               <div className="card" style={{ padding: 18 }}>
                 <div className="h2">Richieste in attesa</div>
 
