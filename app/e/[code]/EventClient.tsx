@@ -562,7 +562,7 @@ if (localMe && myRoster.length === 0) {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     eventId: selectedEvent.id,
     eventText: selectedEvent.text,
-    target: "all",
+    target: "_all_",
     points: selectedEvent.points,
     requestedBy: eventData.me || "Giocatore",
     type: selectedEvent.type,
