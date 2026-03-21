@@ -938,6 +938,10 @@ async function closeDay() {
 
   const currentDay = eventData.currentDay ?? 1;
   const currentDayScores = eventData.dayParticipantScores ?? {};
+  const totalDays = Number(eventData.vacationDays ?? 1);
+
+if (currentDay > totalDays) return;
+
   const previousDailyScores = eventData.dailyScores ?? {};
   const previousTotalScores = eventData.totalScores ?? {};
 
@@ -958,7 +962,7 @@ async function closeDay() {
     resetDayScores[p] = 0;
   });
 
-  const nextDay = currentDay + 1;
+const nextDay = currentDay >= totalDays ? totalDays : currentDay + 1;
 
   const updatedEvent: SavedEvent = {
     ...eventData,
@@ -988,7 +992,11 @@ async function closeDay() {
   });
 
   setScores(newTotalScores);
-  showToast(`Giornata ${currentDay} chiusa`);
+ showToast(
+  currentDay >= totalDays
+    ? "Vacanza terminata"
+    : `Giornata ${currentDay} chiusa.`
+ );
 }
 
 
@@ -1617,12 +1625,37 @@ const updatedEvent: SavedEvent = {
       Classifica del giorno in corso + totale vacanza
     </div>
 
+    <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+      {[...eventData.participants]
+        .sort(
+          (a, b) =>
+            (eventData.totalScores?.[b] ?? 0) - (eventData.totalScores?.[a] ?? 0)
+        )
+        .map((p) => (
+          <div
+            key={`total-${p}`}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              padding: 10,
+              borderRadius: 12,
+              background: "rgba(255,255,255,.05)",
+            }}
+          >
+            <span style={{ fontWeight: 700 }}>{p}</span>
+            <span>{renderPoints(eventData.totalScores?.[p] ?? 0)}</span>
+          </div>
+        ))}
+    </div>
+
     <button
       className="btn btnPrimary"
       style={{ marginTop: 12 }}
       onClick={closeDay}
     >
-      Chiudi giornata
+      {Number(eventData.currentDay ?? 1) >= Number(eventData.vacationDays ?? 1)
+        ? "Termina vacanza"
+        : "Chiudi giornata"}
     </button>
   </div>
 )}
