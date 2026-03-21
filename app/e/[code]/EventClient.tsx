@@ -1138,6 +1138,7 @@ if (votingPhase) {
   </button>
 </div>
 
+{/*
           <div className="muted" style={{ marginTop: 8, textAlign: "center" }}>
             Sta votando: <b>{currentVoter || "NESSUNO"}</b>
           </div>
@@ -1149,6 +1150,19 @@ if (votingPhase) {
 <div className="muted" style={{ marginTop: 6, textAlign: "center" }}>
   Tutti hanno votato: <b>{haveAllPlayersVoted() ? "SI" : "NO"}</b>
 </div>
+
+<div className="muted" style={{ marginTop: 6, textAlign: "center" }}>
+  Giocatori: <b>{eventData?.players?.join(", ") || "-"}</b>
+</div>
+
+<div className="muted" style={{ marginTop: 6, textAlign: "center" }}>
+  Numero giocatori: <b>{eventData?.players?.length ?? 0}</b>
+</div>
+
+<div className="muted" style={{ marginTop: 6, textAlign: "center" }}>
+  Voti salvati: <b>{Object.keys(votes).join(", ") || "-"}</b>
+</div>
+*/}
 
 {waitingForOthers && (
   <div
@@ -1164,33 +1178,6 @@ if (votingPhase) {
     Hai votato. Attendi che tutti gli altri completino la votazione...
   </div>
 )}
-
-{isCurrentVoterComplete() && !haveAllPlayersVoted() && (
-  <div
-    style={{
-      marginTop: 12,
-      padding: 12,
-      borderRadius: 12,
-      background: "rgba(255,255,255,.06)",
-      textAlign: "center",
-      fontWeight: 700,
-    }}
-  >
-    Hai votato. Attendi che tutti gli altri completino la votazione...
-  </div>
-)}
-
-<div className="muted" style={{ marginTop: 6, textAlign: "center" }}>
-  Giocatori: <b>{eventData?.players?.join(", ") || "-"}</b>
-</div>
-
-<div className="muted" style={{ marginTop: 6, textAlign: "center" }}>
-  Numero giocatori: <b>{eventData?.players?.length ?? 0}</b>
-</div>
-
-<div className="muted" style={{ marginTop: 6, textAlign: "center" }}>
-  Voti salvati: <b>{Object.keys(votes).join(", ") || "-"}</b>
-</div>
 
           <div style={{ marginTop: 20, display: "grid", gap: 18 }}>
             <div>
