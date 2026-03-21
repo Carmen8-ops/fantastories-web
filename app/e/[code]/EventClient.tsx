@@ -1754,43 +1754,151 @@ const updatedEvent: SavedEvent = {
   </>
 )}
 
-        {view === "classifiche" && (
+ {view === "classifiche" && (
   <>
-    <div className="card" style={{ padding: 18 }}>
-      <div className="h2">Classifiche</div>
+    {isMultiDayVacation ? (
+      <>
+        <div className="card" style={{ padding: 18 }}>
+          <div className="h2">Classifica giornaliera</div>
 
-      <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
-        {playerRanking.map((row, index) => (
-          <div
-            key={row.player}
-            style={{
-              padding: 12,
-              borderRadius: 14,
-              background:
-                index === 0
-                  ? "linear-gradient(90deg, rgba(255,0,204,.18), rgba(51,51,255,.18))"
-                  : "rgba(255,255,255,.05)",
-            }}
-          >
+          <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+            {[...visiblePlayers]
+              .map((player) => {
+                const team = eventData.rosters[player] ?? [];
+                const total = team.reduce(
+                  (sum, member) =>
+                    sum + (eventData.dayParticipantScores?.[member] ?? 0),
+                  0
+                );
+
+                return {
+                  player,
+                  team,
+                  total,
+                };
+              })
+              .sort((a, b) => b.total - a.total)
+              .map((row, index) => (
+                <div
+                  key={`daily-${row.player}`}
+                  style={{
+                    padding: 12,
+                    borderRadius: 14,
+                    background:
+                      index === 0
+                        ? "linear-gradient(90deg, rgba(255,0,204,.18), rgba(51,51,255,.18))"
+                        : "rgba(255,255,255,.05)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      alignItems: "center",
+                    }}
+                  >
+                    <span style={{ fontWeight: 800 }}>{row.player}</span>
+                    <span style={{ fontWeight: 800 }}>{row.total} pt</span>
+                  </div>
+
+                  <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
+                    Squadra: {row.team.length ? row.team.join(", ") : "—"}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 18 }}>
+          <div className="h2">Classifica totale vacanza</div>
+
+          <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+            {[...visiblePlayers]
+              .map((player) => {
+                const team = eventData.rosters[player] ?? [];
+                const total = team.reduce(
+                  (sum, member) =>
+                    sum + (eventData.totalScores?.[member] ?? 0),
+                  0
+                );
+
+                return {
+                  player,
+                  team,
+                  total,
+                };
+              })
+              .sort((a, b) => b.total - a.total)
+              .map((row, index) => (
+                <div
+                  key={`total-${row.player}`}
+                  style={{
+                    padding: 12,
+                    borderRadius: 14,
+                    background:
+                      index === 0
+                        ? "linear-gradient(90deg, rgba(255,0,204,.18), rgba(51,51,255,.18))"
+                        : "rgba(255,255,255,.05)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      alignItems: "center",
+                    }}
+                  >
+                    <span style={{ fontWeight: 800 }}>{row.player}</span>
+                    <span style={{ fontWeight: 800 }}>{row.total} pt</span>
+                  </div>
+
+                  <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
+                    Squadra: {row.team.length ? row.team.join(", ") : "—"}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </>
+    ) : (
+      <div className="card" style={{ padding: 18 }}>
+        <div className="h2">Classifiche</div>
+
+        <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+          {playerRanking.map((row, index) => (
             <div
+              key={row.player}
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                alignItems: "center",
+                padding: 12,
+                borderRadius: 14,
+                background:
+                  index === 0
+                    ? "linear-gradient(90deg, rgba(255,0,204,.18), rgba(51,51,255,.18))"
+                    : "rgba(255,255,255,.05)",
               }}
             >
-              <span style={{ fontWeight: 800 }}>{row.player}</span>
-              <span style={{ fontWeight: 800 }}>{row.total} pt</span>
-            </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ fontWeight: 800 }}>{row.player}</span>
+                <span style={{ fontWeight: 800 }}>{row.total} pt</span>
+              </div>
 
-            <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
-              Squadra: {row.team.length ? row.team.join(", ") : "—"}
+              <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
+                Squadra: {row.team.length ? row.team.join(", ") : "—"}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    )}
 
     <div style={{ height: 12 }} />
   </>
