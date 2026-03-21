@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../lib/supabase";
+import { generateEventPool } from "../../../data/events/getEvents";
 
 type EventItem = {
   id: string;
@@ -964,14 +965,21 @@ if (currentDay > totalDays) return;
 
 const nextDay = currentDay >= totalDays ? totalDays : currentDay + 1;
 
-  const updatedEvent: SavedEvent = {
-    ...eventData,
-    me: "",
-    dailyScores: newDailyScores,
-    totalScores: newTotalScores,
-    dayParticipantScores: resetDayScores,
-    currentDay: nextDay,
-  };
+  const newGeneratedEvents = generateEventPool({
+  eventPack: eventData.eventPack,
+  eventGroup: eventData.eventGroup,
+  location: eventData.vacationLocation,
+});
+
+const updatedEvent: SavedEvent = {
+  ...eventData,
+  me: "",
+  dailyScores: newDailyScores,
+  totalScores: newTotalScores,
+  dayParticipantScores: resetDayScores,
+  currentDay: nextDay,
+  generatedEvents: newGeneratedEvents,
+};
 
   const { error } = await supabase
     .from("events")
