@@ -294,6 +294,30 @@ if (localMe && myRoster.length === 0) {
     .sort((a, b) => b.total - a.total);
 }, [eventData, scores, isMultiDayVacation, visiblePlayers]);
 
+const visibleRequests = useMemo(() => {
+  const filtered = requests.filter(
+    (request) => !hiddenRequestIds.includes(request.id)
+  );
+
+  const uniqueMap = new Map<string, EventRequest>();
+
+  filtered.forEach((request) => {
+    const key = [
+      request.eventText,
+      request.target,
+      request.requestedBy,
+      request.points,
+      request.type,
+    ].join("|");
+
+    if (!uniqueMap.has(key)) {
+      uniqueMap.set(key, request);
+    }
+  });
+
+  return Array.from(uniqueMap.values());
+}, [requests, hiddenRequestIds]);
+
   function showToast(message: string) {
     setToast(message);
     setTimeout(() => setToast(""), 1800);
@@ -1874,9 +1898,7 @@ const updatedEvent: SavedEvent = {
                 <div className="h2">Richieste in attesa</div>
 
                 <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
-                 {requests
-  .filter((request) => !hiddenRequestIds.includes(request.id))
-  .map((request) => (
+                {visibleRequests.map((request) => (
                     <div
                       key={request.id}
                       style={{
