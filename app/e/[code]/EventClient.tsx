@@ -1129,7 +1129,8 @@ if (votingPhase) {
     className="btn"
     style={{ marginTop: 10 }}
     onClick={async () => {
-      await navigator.clipboard.writeText(eventData.code);
+      const text = `Unisciti al mio evento FantaStories!\nCodice: ${eventData.code}`;
+      await navigator.clipboard.writeText(text);
       showToast("Codice copiato!");
     }}
   >
