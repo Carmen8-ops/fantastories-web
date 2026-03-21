@@ -1102,6 +1102,41 @@ if (votingPhase) {
             Votazione pre-partita
           </div>
 
+          <div
+  style={{
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 14,
+    background: "rgba(255,255,255,.06)",
+    textAlign: "center",
+  }}
+>
+  <div className="muted" style={{ marginBottom: 6 }}>
+    Codice evento
+  </div>
+
+  <div
+    style={{
+      fontSize: 26,
+      fontWeight: 800,
+      letterSpacing: 2,
+    }}
+  >
+    {eventData.code}
+  </div>
+
+  <button
+    className="btn"
+    style={{ marginTop: 10 }}
+    onClick={async () => {
+      await navigator.clipboard.writeText(eventData.code);
+      showToast("Codice copiato!");
+    }}
+  >
+    Copia codice
+  </button>
+</div>
+
           <div className="muted" style={{ marginTop: 8, textAlign: "center" }}>
             Sta votando: <b>{currentVoter || "NESSUNO"}</b>
           </div>
